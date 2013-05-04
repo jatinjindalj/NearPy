@@ -47,3 +47,28 @@ class Storage(object):
         Removes all buckets and their content.
         """
         raise NotImplementedError
+
+    def store_raw_vector(self, hash_name, vector_key, v):
+        """
+        Stores a single vector with an individual key, with no data.
+        This is used by hashes to store axes.
+        """
+        raise NotImplementedError
+
+    def get_raw_vector(self, hash_name, vector_key):
+        """
+        Returns numpy vector for specified key
+        """
+        raise NotImplementedError
+
+    def clean_raw_vectors(self, hash_name):
+        """
+        Removes all raw vectors for specified hash
+        """
+        raise NotImplementedError
+
+    def clean_all_raw_vectors(self):
+        """
+        Removes all raw vectors for all hashes
+        """
+        raise NotImplementedError

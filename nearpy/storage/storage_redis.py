@@ -88,3 +88,44 @@ class RedisStorage(Storage):
         bucket_keys = self.redis_object.keys(pattern='nearpy_*')
         for bucket_key in bucket_keys:
             self.redis_object.delete(bucket_key)
+
+    def store_raw_vector(self, hash_name, vector_key, v):
+        """
+        Stores a single vector with an individual key, with no data.
+        This is used by hashes to store axes.
+        """
+        # Make sure to remove old values
+        redis_key = 'nearpyraw_%s_%s' % (hash_name, vector_key)
+        self.redis_object.delete(redis_key)
+
+        # Make sure it is a 1d vector
+        v = numpy.reshape(v, v.shape[0])
+
+        # Save individual coordinates
+        for coord in v:
+            self.redis_object.rpush(redis_key, coord)
+
+    def get_raw_vector(self, hash_name, vector_key):
+        """
+        Returns numpy vector for specified key
+        """
+        redis_key = 'nearpyraw_%s_%s' % (hash_name, vector_key)
+
+        coords = self.redis_object.lrange(redis_key, 0, -1)
+        return numpy.fromiter(coords, dtype=numpy.float64)
+
+    def clean_raw_vectors(self, hash_name):
+        """
+        Removes all raw vectors for specified hash
+        """
+        bucket_keys = self.redis_object.keys(pattern='nearpyraw_%s_*' % hash_name)
+        for bucket_key in bucket_keys:
+            self.redis_object.delete(bucket_key)
+
+    def clean_all_raw_vectors(self):
+        """
+        Removes all raw vectors for all hashes
+        """
+        bucket_keys = self.redis_object.keys(pattern='nearpyraw_*')
+        for bucket_key in bucket_keys:
+            self.redis_object.delete(bucket_key)

@@ -46,10 +46,18 @@ class RandomDiscretizedProjections(LSHash):
         self.vectors = None
         self.bin_width = bin_width
 
-    def reset(self, dim):
-        """ Resets / Initializes the hash for the specified dimension. """
+    def reset(self, dim, storage=None):
+        """
+        Resets / Initializes the hash for the specified dimension.
+        If storage is defined, loads configuration from it.
+        """
         self.dim = dim
         self.vectors = numpy.random.randn(self.projection_count, dim)
+
+        if storage:
+            for index in range(self.projection_count):
+                v = storage.get_raw_vector(self.hash_name, 'proj_%d' % index)
+                self.vectors[index, :] = v
 
     def hash_vector(self, v):
         """
@@ -60,3 +68,11 @@ class RandomDiscretizedProjections(LSHash):
         projection = numpy.floor(projection / self.bin_width)
         # Return key
         return ['_'.join([str(int(x)) for x in projection])]
+
+    def save(self, storage_adapter):
+        """
+        Saves hash configuration to specified storage adapter.
+        """
+        for index in range(self.projection_count):
+            storage_adapter.store_raw_vector(self.hash_name, 'proj_%d' % index, self.vectors[index, :])
+

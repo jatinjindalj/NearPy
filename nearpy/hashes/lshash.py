@@ -31,8 +31,11 @@ class LSHash(object):
         """
         self.hash_name = hash_name
 
-    def reset(self, dim):
-        """ Resets / Initializes the hash for the specified dimension. """
+    def reset(self, dim, storage=None):
+        """
+        Resets / Initializes the hash for the specified dimension.
+        If storage is defined, loads configuration from it.
+        """
         raise NotImplementedError
 
     def hash_vector(self, v):
@@ -40,6 +43,12 @@ class LSHash(object):
         Hashes the vector and returns a list of bucket keys, that match the
         vector. Depending on the hash implementation this list can contain
         one or many bucket keys.
+        """
+        raise NotImplementedError
+
+    def save(self, storage_adapter):
+        """
+        Saves hash configuration to specified storage adapter.
         """
         raise NotImplementedError
 
