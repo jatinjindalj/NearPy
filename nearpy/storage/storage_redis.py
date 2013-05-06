@@ -82,9 +82,7 @@ class RedisStorage(Storage):
             if sparse:
                 # Construct vector from sparse representation
                 coords = val_dict['vector']
-                print coords
                 dim = int(coords[0])
-                print 'dim = %d' % dim
                 coords = coords[1:]
                 vector = numpy.zeros(dim)
                 for k in range(len(coords)/2):
