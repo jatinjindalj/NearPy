@@ -52,17 +52,22 @@ class Engine(object):
                 In this case the result is just the content from the
                 buckets as an unsorted/unfiltered list of (vector, data)
                 tuples.
+
+    Set sparse to True if your vectors are mostly zeros. In this case the
+    storage adapters use a representation optimized for sparse vectors
+    (index, value).
     """
 
     def __init__(self, dim, lshashes=[RandomBinaryProjections('default', 10)],
                  distance=EuclideanDistance(),
                  vector_filters=[NearestFilter(10)],
-                 storage=MemoryStorage()):
+                 storage=MemoryStorage(), sparse=False):
         """ Keeps the configuration. """
         self.lshashes = lshashes
         self.distance = distance
         self.vector_filters = vector_filters
         self.storage = storage
+        self.sparse = sparse
 
         # Initialize all hashes for the data space dimension.
         for lshash in self.lshashes:
@@ -78,7 +83,7 @@ class Engine(object):
         for lshash in self.lshashes:
             for bucket_key in lshash.hash_vector(v):
                 self.storage.store_vector(lshash.hash_name, bucket_key,
-                                          v, data)
+                                          v, data, self.sparse)
 
     def neighbours(self, v):
         """
@@ -92,7 +97,7 @@ class Engine(object):
         for lshash in self.lshashes:
             for bucket_key in lshash.hash_vector(v):
                 bucket_content = self.storage.get_bucket(lshash.hash_name,
-                                                         bucket_key)
+                                                         bucket_key, self.sparse)
                 candidates.extend(bucket_content)
 
         # Apply distance implementation if specified

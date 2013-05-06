@@ -41,7 +41,7 @@ class RedisStorage(Storage):
         """ Uses specified redis object for storage. """
         self.redis_object = redis_object
 
-    def store_vector(self, hash_name, bucket_key, v, data):
+    def store_vector(self, hash_name, bucket_key, v, data, sparse=False):
         """
         Stores vector and JSON-serializable data in bucket with specified key.
         """
@@ -50,13 +50,26 @@ class RedisStorage(Storage):
         # Make sure it is a 1d vector
         v = numpy.reshape(v, v.shape[0])
 
-        val_dict = {'vector': v.tolist()}
+        if sparse:
+            # If vector is sparse, only store non-zero values
+            # First entry is number of dimensions
+            coords = [v.shape[0]]
+            # Append index, value sequences
+            for index in range(v.shape[0]):
+                if v[index] != 0.0:
+                    coords.append(index)
+                    coords.append(v[index])
+            val_dict = {'vector': coords}
+        else:
+            # Store all coordinates
+            val_dict = {'vector': v.tolist()}
+
         if data:
             val_dict['data'] = data
 
         self.redis_object.rpush(redis_key, json.dumps(val_dict))
 
-    def get_bucket(self, hash_name, bucket_key):
+    def get_bucket(self, hash_name, bucket_key, sparse=False):
         """
         Returns bucket content as list of tuples (vector, data).
         """
@@ -65,7 +78,21 @@ class RedisStorage(Storage):
         results = []
         for item_str in items:
             val_dict = json.loads(item_str)
-            vector = numpy.fromiter(val_dict['vector'], dtype=numpy.float64)
+
+            if sparse:
+                # Construct vector from sparse representation
+                coords = val_dict['vector']
+                print coords
+                dim = int(coords[0])
+                print 'dim = %d' % dim
+                coords = coords[1:]
+                vector = numpy.zeros(dim)
+                for k in range(len(coords)/2):
+                    index = int(coords[k*2])
+                    value = numpy.fromiter([coords[k*2+1]], dtype=numpy.float64)[0]
+                    vector[index] = value
+            else:
+                vector = numpy.fromiter(val_dict['vector'], dtype=numpy.float64)
             if 'data' in val_dict:
                 results.append((vector, val_dict['data']))
             else:

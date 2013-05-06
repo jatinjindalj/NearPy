@@ -36,7 +36,7 @@ class MemoryStorage(Storage):
     def __init__(self):
         self.buckets = {}
 
-    def store_vector(self, hash_name, bucket_key, v, data):
+    def store_vector(self, hash_name, bucket_key, v, data, sparse=False):
         """
         Stores vector and JSON-serializable data in bucket with specified key.
         """
@@ -48,7 +48,7 @@ class MemoryStorage(Storage):
             self.buckets[hash_name][bucket_key] = []
         self.buckets[hash_name][bucket_key].append((v, data))
 
-    def get_bucket(self, hash_name, bucket_key):
+    def get_bucket(self, hash_name, bucket_key, sparse=False):
         """
         Returns bucket content as list of tuples (vector, data).
         """
